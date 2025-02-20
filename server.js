@@ -6,15 +6,36 @@ require("dotenv").config();
 const { Pool } = require("pg");
 
 const app = express();
+
+// Conectar ao banco de dados PostgreSQL
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
-      rejectUnauthorized: false, // Necessário para conexão segura no Render
+    rejectUnauthorized: false, // Necessário para conexão segura no Render
   },
 });
 pool.connect()
   .then(() => console.log("Conectado ao banco de dados!"))
   .catch(err => console.error("Erro ao conectar ao banco:", err));
+
+// Criação da tabela 'products' caso ela não exista
+const createTableQuery = `
+  CREATE TABLE IF NOT EXISTS products (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
+    image TEXT,
+    category VARCHAR(100),
+    colors TEXT[],
+    quantity INT NOT NULL,
+    sizes TEXT[]
+  );
+`;
+
+pool.query(createTableQuery)
+  .then(() => console.log("Tabela 'products' criada com sucesso ou já existe"))
+  .catch(err => console.error("Erro ao criar tabela 'products':", err));
+
 const port = 8000;
 
 // Configura o Cloudinary
@@ -33,6 +54,7 @@ app.use(cors({
   credentials: true,
 }));
 
+// Função para deletar imagem do Cloudinary
 function deleteImage(publicId) {
   return new Promise((resolve, reject) => {
     cloudinary.uploader.destroy(publicId, { invalidate: true }, (error, result) => {
