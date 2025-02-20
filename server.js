@@ -2,10 +2,19 @@ const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const cloudinary = require("cloudinary").v2;
-const pool = require("./db"); // Importa a conexão com o banco de dados
 require("dotenv").config();
+const { Pool } = require("pg");
 
 const app = express();
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+      rejectUnauthorized: false, // Necessário para conexão segura no Render
+  },
+});
+pool.connect()
+  .then(() => console.log("Conectado ao banco de dados!"))
+  .catch(err => console.error("Erro ao conectar ao banco:", err));
 const port = 8000;
 
 // Configura o Cloudinary
